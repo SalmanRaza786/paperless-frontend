@@ -19,6 +19,7 @@ interface RequestOptions extends RequestInit {
 
 /**
  * Type-safe HTTP client wrapper around native fetch for the Paperless FastAPI backend.
+ * Automatically attaches Authorization header if access token exists.
  */
 export async function apiClient<T>(
   endpoint: string,
@@ -43,9 +44,17 @@ export async function apiClient<T>(
     }
   }
 
-  const defaultHeaders: HeadersInit = {
+  const defaultHeaders: Record<string, string> = {
     "Content-Type": "application/json",
   };
+
+  // Attach Bearer token from localStorage in browser context
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("paperless_access_token");
+    if (token) {
+      defaultHeaders["Authorization"] = `Bearer ${token}`;
+    }
+  }
 
   const response = await fetch(url, {
     headers: {
